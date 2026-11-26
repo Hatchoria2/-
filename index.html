@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>百人一首ゲーム - ハッチョリア</title>
+    <style>
+        :root {
+            --primary-color: #2e7d32;
+            --primary-light: #4caf50;
+            --accent-color: #81c784;
+            --bg-color: #e8f5e9;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(#c8e6c9 10%, transparent 11%),
+                radial-gradient(#c8e6c9 10%, transparent 11%);
+            background-size: 30px 30px;
+            background-position: 0 0, 15px 15px;
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        header {
+            position: relative;
+            background: linear-gradient(135deg, #2e7d32, #66bb6a);
+            color: white;
+            text-align: center;
+            padding: 55px 20px 35px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .server-status-container {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+        }
+
+        .server-status-badge {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
+        }
+
+        .server-status-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .server-status-dot {
+            height: 8px;
+            width: 8px;
+            background-color: #86efac;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.35; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .server-status-text-wrapper {
+            position: relative;
+            display: inline-block;
+            height: 1.2em;
+            width: 180px;
+            overflow: hidden;
+            vertical-align: middle;
+        }
+
+        .status-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            color: #ffffff;
+            font-weight: bold;
+            text-align: left;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s linear, visibility 0.25s linear;
+        }
+
+        .status-text.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        h1 {
+            margin: 10px 0 10px 0;
+            font-size: 1.8rem;
+        }
+
+        .sub-title {
+            margin: 0;
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .main-container {
+            max-width: 800px;
+            margin: 25px auto;
+            padding: 0 15px;
+        }
+
+        .nav-menu {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            list-style: none;
+            padding: 0;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .nav-menu button {
+            background-color: white;
+            border: 2px solid var(--primary-light);
+            color: var(--primary-color);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .nav-menu button:hover,
+        .nav-menu button.active {
+            background-color: var(--primary-light);
+            color: white;
+        }
+
+        .page-content {
+            display: none;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid #a5d6a7;
+            margin-bottom: 40px;
+        }
+
+        .page-content.active {
+            display: block;
+        }
+
+        .game-link-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .game-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+            padding: 15px 35px;
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 30px;
+            box-shadow: 0 4px 10px rgba(245, 124, 0, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .game-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(245, 124, 0, 0.4);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 6px;
+            margin-top: 0;
+        }
+
+        .site-footer {
+            background-color: #ffffff;
+            color: #333;
+            padding: 40px 20px 20px;
+            border-top: 2px solid #c8e6c9;
+            margin-top: 50px;
+        }
+
+        .footer-container {
+            max-width: 900px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+        }
+
+        .footer-section {
+            margin-bottom: 10px;
+        }
+
+        .footer-title {
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 4px;
+            margin-bottom: 12px;
+            display: inline-block;
+        }
+
+        .footer-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .footer-links li a {
+            color: #555;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+            cursor: pointer;
+        }
+
+        .footer-links li a:hover {
+            color: var(--primary-light);
+            text-decoration: underline;
+        }
+
+        .footer-bottom {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-size: 0.8rem;
+            color: #777;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 600px) {
+            header {
+                padding-top: 60px;
+            }
+            .server-status-container {
+                top: 10px;
+                right: 50%;
+                transform: translateX(50%);
+                width: max-content;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="server-status-container">
+            <div id="server-status-box" class="server-status-badge">
+                <span id="server-status-dot" class="server-status-dot"></span>
+                <div class="server-status-text-wrapper">
+                    <span id="status-ja" class="status-text active">サーバー状態：正常</span>
+                    <span id="status-en" class="status-text">Server Status: Normal</span>
+                </div>
+            </div>
+        </div>
+
+        <h1>勉強×ゲーム</h1>
+        <p class="sub-title">ハッチョリアが提供する無料・無広告の勉強ゲーム</p>
+    </header>
+
+    <div class="main-container">
+        <ul class="nav-menu">
+            <li><button id="btn-home" class="active" onclick="showPage('home')">ホーム</button></li>
+            <li><button id="btn-asobikata" onclick="showPage('asobikata')">目的・遊び方</button></li>
+            <li><button id="btn-online" onclick="showPage('online')">オンライン対戦</button></li>
+            <li><button id="btn-privacy" onclick="showPage('privacy')">プライバシー</button></li>
+        </ul>
+
+        <!-- Home Content Card -->
+        <div id="page-home" class="page-content active">
+            <h2>楽しく勉強をマスターしよう！</h2>
+            <p>お友達や家族と一緒に楽しくできるゲームです。</p>
+            <div class="game-link-container">
+                <a href="https://hedgebirdcat.github.io/Hatchoria/" target="_blank" rel="noopener noreferrer" class="game-btn">
+                    ゲームはこちらから 🎮
+                </a>
+            </div>
+        </div>
+
+        <!-- Purpose & How to Play Card -->
+        <div id="page-asobikata" class="page-content">
+            <h2>このゲームの目的</h2>
+            <p>このゲームは、全ての学ぶ日本人の学力を向上させるためのゲームです。学力を磨くための道具としてゲーム感覚でご利用ください。</p>
+            <p><small>※悪用目的、営利目的（教育道具として活用し、オプション料などを要求することも含む）の使用はご遠慮ください。</small></p>
+
+            <h2>遊び方</h2>
+            <p>英単語暗記ゲーム</p>
+            <p>育成を開始すると、単語の問題が出てきます。</p>
+            <p>答えてXPを稼ぎましょう！レベルが1上がるごとに10コイン稼げます。コインが貯まったらガチャを引き、キャラクターを強化しましょう。</p>
+        </div>
+
+        <!-- Online Match Info Card -->
+        <div id="page-online" class="page-content">
+            <h2>オンライン対戦について</h2>
+            <p>一部のゲームにおいて、お友達や家族と一緒にしたいときにはオンライン対戦をしましょう。</p>
+            <p>インターネットがあれば誰でもプレイすることができます。（※通信量がかかる可能性がございます。）</p>
+            <p>遊びたい相手にフレンドコードを送り、友達に追加してもらいましょう。それさえすれば誰でも一緒にプレイできるようになります。</p>
+        </div>
+
+        <!-- Privacy Policy Card -->
+        <div id="page-privacy" class="page-content">
+            <h2>プライバシーポリシー</h2>
+            <p>ご利用いただくためにアカウント作成時に入力していただいたメールアドレスは、利用者のみなさんに大切なお知らせをお送りすること以外には使用致しませんとともに、第三者に共有することも致しません。ご安心ください。</p>
+            <p>何か気になる点がありましたら、ハッチョリアまでお願い致します。</p>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-container">
+            
+            <div class="footer-section">
+                <div class="footer-title">ハッチョリアのとりくみ・メニュー</div>
+                <ul class="footer-links">
+                    <li><a onclick="showPage('home')">ホーム</a></li>
+                    <li><a onclick="showPage('asobikata')">このゲームの目的</a></li>
+                    <li><a onclick="showPage('asobikata')">遊び方</a></li>
+                    <li><a onclick="showPage('online')">オンライン対戦について</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <div class="footer-title">規約・お問い合わせ</div>
+                <ul class="footer-links">
+                    <li><a onclick="showPage('privacy')">プライバシーポリシー</a></li>
+                    <li><a onclick="showPage('asobikata')">著作権について</a></li>
+                    <li><a onclick="showPage('privacy')">ご意見・お問い合わせ</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <div class="footer-title">ゲーム一覧</div>
+                <ul class="footer-links">
+                    <li>
+                        <a href="https://hedgebirdcat.github.io/Hatchoria/" target="_blank" rel="noopener noreferrer" style="font-weight: bold; color: var(--primary-color);">
+                            英単語暗記ゲーム 
+                        </a>
+                       <br>
+                        <a href="https://haruyasato.github.io/necks/" target="_blank" rel="noopener noreferrer" style="font-weight: bold; color: var(--primary-color);">
+                            
+                            百人一首暗記ゲーム
+                        </a>
+                        <br>
+                         <a href="https://r7kumadaifuzoku0117-ui.github.io/-/" target="_blank" rel="noopener noreferrer" style="font-weight: bold; color: var(--primary-color);">
+                            英単語ジャンパー
+                         </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2026 ハッチョリア (Hatchoria). All rights reserved.</p>
+            </div>
+
+        </div>
+    </footer>
+
+    <script>
+        // SPA Tab Navigation Logic
+        function showPage(pageId) {
+            const pages = document.querySelectorAll('.page-content');
+            pages.forEach(page => page.classList.remove('active'));
+
+            const buttons = document.querySelectorAll('.nav-menu button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+
+            const targetPage = document.getElementById('page-' + pageId);
+            if (targetPage) {
+                targetPage.classList.add('active');
+            }
+
+            const targetBtn = document.getElementById('btn-' + pageId);
+            if (targetBtn) {
+                targetBtn.classList.add('active');
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Server Status Rotation Logic
+        let isJapanese = true;
+
+        const statusJaEl = document.getElementById('status-ja');
+        const statusEnEl = document.getElementById('status-en');
+
+        setInterval(() => {
+            isJapanese = !isJapanese;
+            if (isJapanese) {
+                statusEnEl.classList.remove('active');
+                setTimeout(() => {
+                    statusJaEl.classList.add('active');
+                }, 120);
+            } else {
+                statusJaEl.classList.remove('active');
+                setTimeout(() => {
+                    statusEnEl.classList.add('active');
+                }, 120);
+            }
+        }, 1500);
+    </script>
+</body>
+</html>
